@@ -1,0 +1,123 @@
+name: ${COMPOSE_PROJECT_NAME:-melihov}
+
+# Staging / VPS. Не использовать для локальной разработки на Windows.
+x-wp-config-extra: &wp-config-extra |
+  define( 'WP_HOME', '${WP_PUBLIC_URL}' );
+  define( 'WP_SITEURL', '${WP_PUBLIC_URL}' );
+  define( 'FRONTEND_PUBLIC_URL', '${FRONTEND_PUBLIC_URL}' );
+  define( 'FRONTEND_INTERNAL_URL', '${FRONTEND_INTERNAL_URL}' );
+  define( 'REVALIDATE_SECRET', '${REVALIDATE_SECRET}' );
+  define( 'WP_ENVIRONMENT_TYPE', '${WP_ENVIRONMENT_TYPE:-staging}' );
+
+services:
+  db:
+    image: mariadb:11.4
+    container_name: melihov-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  wordpress:
+    image: wordpress:php8.3-apache
+    container_name: melihov-wp
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${WP_PORT}:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_DEBUG: 0
+      WORDPRESS_CONFIG_EXTRA: *wp-config-extra
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL}
+      FRONTEND_INTERNAL_URL: ${FRONTEND_INTERNAL_URL}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+    volumes:
+      - wp_data:/var/www/html
+      - ./wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./wordpress/wp-content/acf-json:/var/www/html/wp-content/acf-json
+      - ./wordpress/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+    networks:
+      default: {}
+      # Общая с edge-nginx (timesheet) сеть: он проксирует пути WordPress melihov.lexa-kb.ru сюда.
+      proxy_net:
+        aliases: [melihov-wp]
+
+  wp-cli:
+    image: wordpress:cli-php8.3
+    container_name: melihov-wp-cli
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_CONFIG_EXTRA: *wp-config-extra
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL}
+      FRONTEND_INTERNAL_URL: ${FRONTEND_INTERNAL_URL}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+      WP_PUBLIC_URL: ${WP_PUBLIC_URL}
+      WP_ADMIN_USER: ${WP_ADMIN_USER}
+      WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
+    volumes:
+      - wp_data:/var/www/html
+      - ./wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./wordpress/wp-content/acf-json:/var/www/html/wp-content/acf-json
+      - ./wordpress/bootstrap.sh:/bootstrap.sh:ro
+      - ./wordpress/import-catalog.sh:/import-catalog.sh:ro
+      - ./wordpress/import-catalog.php:/import-catalog.php:ro
+      - ./wordpress/catalog:/catalog:ro
+    entrypoint: ["sh", "/bootstrap.sh"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_WP_URL: ${WP_PUBLIC_URL}
+        NEXT_PUBLIC_SITE_URL: ${FRONTEND_PUBLIC_URL}
+    container_name: melihov-frontend
+    restart: unless-stopped
+    depends_on:
+      - wordpress
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    environment:
+      WP_INTERNAL_URL: ${WP_INTERNAL_URL}
+      NEXT_PUBLIC_WP_URL: ${WP_PUBLIC_URL}
+      NEXT_PUBLIC_SITE_URL: ${FRONTEND_PUBLIC_URL}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+    networks:
+      default: {}
+      # Общая с edge-nginx (timesheet) сеть: он проксирует melihov.lexa-kb.ru сюда.
+      proxy_net:
+        aliases: [melihov-frontend]
+
+networks:
+  proxy_net:
+    external: true # создана стеком timesheet; там живёт edge-nginx с портами 80/443
+
+volumes:
+  db_data:
+  wp_data:

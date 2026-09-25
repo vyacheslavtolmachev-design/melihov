@@ -1,0 +1,593 @@
+@import "tailwindcss";
+
+@theme {
+  /* Тёплый сад — базовая олива светлее ещё на полтона, бронза без изменений */
+  --color-bg: #243628;
+  --color-bg-deep: #1a2620;
+  --color-panel: #2e4435;
+  --color-panel-dark: #263a2e;
+
+  --color-fg: #e8eee4;
+  --color-fg-soft: #b8c2b0;
+  /* Осветлён с #8e9a88: тот давал 3.6 на стекле — ниже порога AA 4.5 */
+  --color-fg-muted: #a3ad9e;
+  --color-on-gold: #182418;
+
+  --color-gold: #b89a6c;
+  --color-gold-light: #cbb892;
+  --color-gold-dark: #8f7348;
+  /* Тёмная точка градиентов: #8f7348 давал 2.4 на стекле и 3.6 под текстом кнопки */
+  --color-gold-deep: #ad8f5e;
+
+  /* Шкала кеглей. Новую ступень не заводим — берём ближайшую отсюда. */
+  --text-meta: 11px;
+  --text-label: 12px;
+  --text-small: 13px;
+  --text-ui: 14px;
+  --text-body: 15px;
+  --text-read: 16px;
+  --text-lead: 18px;
+  --text-h4: 20px;
+  --text-h3: 22px;
+  --text-h2: 24px;
+  --text-figure: 30px;
+
+  /* Радиусы: поле, панель, пилюля — больше значений не вводим */
+  --radius-field: 12px;
+  --radius-panel: 16px;
+  --radius-pill: 999px;
+
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-body: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.74;
+    color: var(--color-fg-soft);
+    background-color: var(--color-bg);
+    /* Верхний подсвет на самом фоне; бока — отдельным слоем (::after), иначе их закрывает full-bleed герой */
+    background-image: radial-gradient(
+      1100px 680px at 50% -18%,
+      rgba(78, 98, 62, 0.4),
+      transparent 72%
+    );
+    background-attachment: fixed;
+  }
+
+  /* Боковой свет поверх фонов секций, но под контентом (z-10+) и шапкой (z-50) */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 42% 78% at 0% 42%, rgba(110, 132, 88, 0.38), transparent 70%),
+      radial-gradient(ellipse 40% 76% at 100% 58%, rgba(184, 154, 108, 0.26), transparent 72%);
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.028;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-fg);
+    font-weight: 700;
+    letter-spacing: -0.018em;
+    line-height: 1.14;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-on-gold);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 30px;
+  }
+
+  /* Ритм: 108px вокруг секций главной, 108px перед подвалом, 64px между секциями внутри страницы */
+  .sec {
+    padding-block: 108px;
+  }
+
+  .sec-end {
+    padding-block-end: 108px;
+  }
+
+  .sec-next {
+    padding-block-end: 64px;
+  }
+
+  /* Шапка внутренней страницы. Раньше градиент и отступы копировались в трёх
+     файлах, а 140px секции складывались с 64px контейнера — 204px пустоты. */
+  .page-top {
+    position: relative;
+    overflow: hidden;
+    padding-block: 150px 64px;
+  }
+
+  .page-top::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, #2a4030 0%, #1a2c1c 58%, rgba(18, 31, 20, 0) 100%);
+  }
+
+  .page-top::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 128px;
+    background: linear-gradient(to top, var(--color-bg), transparent);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--font-body);
+    font-size: var(--text-label);
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    /* Светлая бронза: базовая давала 4.07 на стекле, а надзаголовок — мелкий текст */
+    color: var(--color-gold-light);
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 34px;
+    height: 1px;
+    background: var(--color-gold-light);
+    opacity: 0.55;
+  }
+
+  /* Металлический градиент — только здесь и на .btn-gold */
+  .gold-text {
+    background-image: linear-gradient(
+      100deg,
+      #cbb892 0%,
+      #b89a6c 45%,
+      #ad8f5e 70%,
+      #cbb892 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ── Поверхности ─────────────────────────────────────────────────────
+     Две ступени, а не одна. Ореол — признак приподнятости, поэтому он
+     достаётся только шапке, плитке героя и панелям с ценой и формой.
+     Рядовые карточки держатся на волосяном бордере: иначе на главной
+     светятся 27 панелей разом и приподнятое не отличить от обычного. */
+
+  .glass,
+  .media-frame {
+    border: 1px solid rgba(232, 215, 180, 0.24);
+    box-shadow:
+      inset 0 1px 0 rgba(245, 232, 200, 0.16),
+      0 18px 38px -30px rgba(0, 0, 0, 0.6);
+  }
+
+  .glass-strong,
+  .glass-hero,
+  .nav-glass {
+    border: 1px solid rgba(232, 215, 180, 0.5);
+    box-shadow:
+      0 0 0 1px rgba(203, 184, 146, 0.2),
+      0 0 26px 0 rgba(184, 154, 108, 0.36),
+      0 0 54px -6px rgba(184, 154, 108, 0.26),
+      inset 0 1px 0 rgba(245, 232, 200, 0.3),
+      0 20px 44px -28px rgba(0, 0, 0, 0.58);
+  }
+
+  .glass {
+    background: rgba(48, 70, 52, 0.72);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-panel);
+  }
+
+  .glass-strong {
+    background: rgba(48, 70, 52, 0.88);
+    backdrop-filter: blur(14px);
+    border-radius: var(--radius-panel);
+  }
+
+  .glass-hero {
+    background: rgba(38, 58, 40, 0.58);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-panel);
+  }
+
+  .media-frame {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-panel-dark);
+    border-radius: var(--radius-panel);
+  }
+
+  /* Вуаль под подписью: рассчитана на светлый кадр саженца на однотонном фоне */
+  .media-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(
+      180deg,
+      transparent 42%,
+      rgba(18, 31, 20, 0.62) 66%,
+      rgba(14, 25, 16, 0.92) 100%
+    );
+    box-shadow: inset 0 0 0 1px rgba(245, 232, 200, 0.12);
+  }
+
+  .lift {
+    transition:
+      transform 0.45s cubic-bezier(0.16, 0.8, 0.24, 1),
+      border-color 0.45s ease,
+      box-shadow 0.45s ease;
+  }
+
+  .lift:hover {
+    transform: translateY(-4px);
+    border-color: rgba(232, 215, 180, 0.46);
+    box-shadow:
+      inset 0 1px 0 rgba(245, 232, 200, 0.22),
+      0 26px 50px -30px rgba(0, 0, 0, 0.7);
+  }
+
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    padding: 14px 30px;
+    font-family: var(--font-body);
+    font-size: var(--text-ui);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition: all 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .btn-gold {
+    background: linear-gradient(120deg, #cbb892, #b89a6c 55%, #ad8f5e);
+    color: var(--color-on-gold);
+    box-shadow: 0 10px 24px -12px rgba(143, 115, 72, 0.45);
+  }
+
+  /* Блик проходит по кнопке при наведении */
+  .btn-gold::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-140%) skewX(-18deg);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: transform 0.75s cubic-bezier(0.16, 0.8, 0.24, 1);
+  }
+
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 36px -14px rgba(154, 122, 78, 0.65);
+  }
+
+  .btn-gold:hover::after {
+    transform: translateX(140%) skewX(-18deg);
+  }
+
+  /* Периодический блик (CTA «Подбор сада») */
+  .btn-gold-shine::after {
+    animation: btn-gold-shine 3s ease-in-out infinite;
+  }
+
+  .btn-gold-shine:hover::after {
+    animation: none;
+  }
+
+  @keyframes btn-gold-shine {
+    0% {
+      transform: translateX(-140%) skewX(-18deg);
+    }
+    14% {
+      transform: translateX(140%) skewX(-18deg);
+    }
+    14.01%,
+    100% {
+      transform: translateX(-140%) skewX(-18deg);
+    }
+  }
+
+  .btn-ghost {
+    background: rgba(238, 242, 232, 0.04);
+    border: 1px solid rgba(238, 242, 232, 0.14);
+    color: var(--color-fg);
+  }
+
+  .btn-ghost:hover {
+    transform: translateY(-2px);
+    border-color: rgba(196, 165, 116, 0.45);
+    background: rgba(196, 165, 116, 0.08);
+  }
+
+  .nav-glass {
+    background: rgba(36, 54, 40, 0.88);
+    backdrop-filter: blur(16px) saturate(120%);
+    border-radius: var(--radius-panel);
+    transition:
+      background 0.45s ease,
+      border-color 0.45s ease,
+      box-shadow 0.45s ease;
+  }
+
+  .nav-glass[data-scrolled="true"] {
+    background: rgba(26, 38, 30, 0.94);
+    border-color: rgba(245, 232, 200, 0.56);
+    box-shadow:
+      0 0 0 1px rgba(232, 215, 180, 0.24),
+      0 0 30px 0 rgba(203, 184, 146, 0.4),
+      0 0 62px -4px rgba(184, 154, 108, 0.28),
+      inset 0 1px 0 rgba(250, 240, 214, 0.3),
+      0 26px 52px -26px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Пометка «фото ещё не загружено»: редактор видит её прямо в каталоге */
+  .photo-pending {
+    position: absolute;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(232, 215, 180, 0.34);
+    background: rgba(18, 31, 20, 0.82);
+    padding: 5px 11px;
+    font-size: var(--text-meta);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-fg-soft);
+    backdrop-filter: blur(6px);
+  }
+
+  .prose-panel :is(h2, h3) {
+    margin-top: 2.2em;
+    margin-bottom: 0.7em;
+  }
+
+  .prose-panel h2::after {
+    content: "";
+    display: block;
+    margin-top: 0.55em;
+    width: 48px;
+    height: 2px;
+    background: var(--color-gold);
+    opacity: 0.7;
+  }
+
+  .prose-panel ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .prose-panel li {
+    position: relative;
+    padding-left: 22px;
+    margin-block: 0.6em;
+  }
+
+  .prose-panel li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--color-gold);
+  }
+}
+
+.emblem-3d__medal {
+  transition: transform 0.55s cubic-bezier(0.16, 0.8, 0.24, 1);
+  will-change: transform;
+}
+
+.emblem-3d__medal--live {
+  transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.emblem-3d__medal--sway {
+  transition: none;
+  /* Только yaw: rotateX в перспективе визуально вытягивает круг */
+  animation: emblem-sway 8.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes emblem-sway {
+  0%,
+  100% {
+    transform: rotateX(4deg) rotateY(-32deg) translateZ(8px);
+  }
+  50% {
+    transform: rotateX(4deg) rotateY(32deg) translateZ(8px);
+  }
+}
+
+/* Золотой перелив: блик внутри медальона, не по внешнему зелёному ободу */
+.emblem-3d__shimmer {
+  inset: 11% !important;
+  border-radius: 50%;
+  -webkit-mask-image: radial-gradient(circle, #000 62%, transparent 78%);
+  mask-image: radial-gradient(circle, #000 62%, transparent 78%);
+}
+
+.emblem-3d__shimmer::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(247, 238, 218, 0.1) 40%,
+    rgba(228, 207, 168, 0.45) 48%,
+    rgba(197, 168, 128, 0.55) 52%,
+    rgba(156, 122, 78, 0.28) 58%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  mix-blend-mode: soft-light;
+  animation: emblem-shimmer 4.2s ease-in-out infinite;
+}
+
+.emblem-3d__shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: inherit;
+  background: linear-gradient(
+    160deg,
+    rgba(197, 168, 128, 0.16) 0%,
+    transparent 40%,
+    transparent 65%,
+    rgba(156, 122, 78, 0.1) 100%
+  );
+  mix-blend-mode: soft-light;
+  opacity: 0.5;
+  animation: emblem-glow 5.6s ease-in-out infinite alternate;
+}
+
+@keyframes emblem-shimmer {
+  0% {
+    background-position: 120% 0;
+    transform: translateX(-6%);
+  }
+  50% {
+    background-position: 50% 0;
+  }
+  100% {
+    background-position: -20% 0;
+    transform: translateX(6%);
+  }
+}
+
+@keyframes emblem-glow {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emblem-3d__medal,
+  .emblem-3d__medal--live,
+  .emblem-3d__medal--sway {
+    transition: none;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .emblem-3d__shimmer::before,
+  .emblem-3d__shimmer::after {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .sec {
+    padding-block: 72px;
+  }
+
+  .sec-end {
+    padding-block-end: 72px;
+  }
+
+  .sec-next {
+    padding-block-end: 48px;
+  }
+}
+
+@media (max-width: 768px) {
+  .shell {
+    padding-inline: 14px;
+  }
+
+  body {
+    background-attachment: scroll;
+  }
+
+  /* Perf-lite: тяжёлое стекло и подъёмы на мобильных отключены */
+  .glass,
+  .glass-strong,
+  .nav-glass {
+    backdrop-filter: blur(10px);
+  }
+
+  .lift:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .btn,
+  .lift,
+  .nav-glass {
+    transition: none;
+  }
+
+  .btn-gold::after {
+    display: none;
+  }
+
+  .btn-gold-shine::after {
+    animation: none;
+  }
+
+  .lift:hover,
+  .btn-gold:hover,
+  .btn-ghost:hover {
+    transform: none;
+  }
+}
