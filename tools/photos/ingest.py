@@ -8,6 +8,8 @@
 «Черешня Чемпион.jpg» или слаг «apple-florina.jpg». Регистр, пробелы, дефисы
 и «ё» не важны. Названия, которые есть у нескольких культур (Натали, Чемпион,
 Киргизская), без культуры в имени не разбираются — скрипт об этом скажет.
+Родовое имя культуры подходит и для уточнённой: «Вишня Натали» — войлочная
+вишня, «Яблоня Арбат» — колоновидная яблоня.
 
 Исходники в inbox/ не трогаются: их удаляют вручную. Уже разобранный файл
 узнаётся по хешу и повторно не обрабатывается. Кадр ужимается до 1600 px
@@ -96,13 +98,22 @@ def match(stem: str, varieties: list[dict[str, str]], cultures: dict[str, dict[s
         ((norm(form), slug) for slug, c in cultures.items() for form in (c["name"], c["singular"])),
         key=lambda pair: -len(pair[0]),
     )
-    for form, culture in forms:
-        for rest in (key.removeprefix(form), key.removesuffix(form)):
-            if rest == key or not rest:
-                continue
-            hits = [v for v in varieties if v["culture"] == culture and norm(v["title"]) == rest]
-            if hits:
-                return hits
+    # Сначала точная культура, затем родовое имя как уточнённая: «Вишня Натали» найдёт
+    # войлочную вишню, «Яблоня Арбат» — колоновидную яблоню.
+    names = {slug: (norm(c["name"]), norm(c["singular"])) for slug, c in cultures.items()}
+    for strict in (True, False):
+        for form, culture in forms:
+            for rest in (key.removeprefix(form), key.removesuffix(form)):
+                if rest == key or not rest:
+                    continue
+                hits = [
+                    v for v in varieties
+                    if norm(v["title"]) == rest
+                    and (v["culture"] == culture if strict
+                         else any(name.endswith(form) for name in names.get(v["culture"], ())))
+                ]
+                if hits:
+                    return hits
     return []
 
 
