@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
-import { WakeMaskReveal } from "./WakeMaskReveal";
+import { PollenReveal } from "./PollenReveal";
 import { Emblem3D } from "@/components/brand/Emblem3D";
 import type { Article } from "@/lib/articles";
 
@@ -59,7 +59,7 @@ export function Hero({ featuredArticle, cultureTiles }: HeroProps) {
       {/* Сад во всю ширину экрана; к краям и к низу растворяется в фоне страницы */}
       <div className="pointer-events-none absolute inset-0 z-[1] [mask-image:linear-gradient(90deg,transparent,#000_16%,#000_84%,transparent)]">
         <div className="absolute inset-0 [mask-image:linear-gradient(to_bottom,#000_70%,transparent)]">
-          <WakeMaskReveal />
+          <PollenReveal />
         </div>
       </div>
 
