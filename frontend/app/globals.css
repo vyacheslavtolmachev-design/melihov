@@ -130,6 +130,54 @@
     padding-block-end: 64px;
   }
 
+  /* Гравюры на полях (SideOrnaments). Появляются, когда поле шире ~120px;
+     высота гравюры привязана к ширине поля, чтобы ветвь не заходила под контент */
+  .side-ornaments {
+    display: none;
+  }
+
+  @media (min-width: 1440px) {
+    .side-ornaments {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      animation: ornaments-in 1.6s cubic-bezier(0.16, 0.8, 0.24, 1) both;
+    }
+  }
+
+  .side-ornament {
+    --gutter: calc((100vw - 1200px) / 2);
+    position: absolute;
+    height: min(86vh, calc(var(--gutter) * 2.35));
+    aspect-ratio: 2 / 5;
+    opacity: 0.2;
+  }
+
+  .side-ornament--left {
+    top: 3vh;
+    left: 0;
+  }
+
+  .side-ornament--right {
+    bottom: 2vh;
+    right: 0;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .side-ornament {
+        animation: ornament-drift linear both;
+        animation-timeline: scroll(root);
+      }
+
+      .side-ornament--right {
+        animation-direction: reverse;
+      }
+    }
+  }
+
   /* Шапка внутренней страницы. Раньше градиент и отступы копировались в трёх
      файлах, а 140px секции складывались с 64px контейнера — 204px пустоты. */
   .page-top {
@@ -516,7 +564,27 @@
   }
 }
 
+@keyframes ornaments-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Лёгкий параллакс гравюр по прокрутке страницы */
+@keyframes ornament-drift {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -56px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .side-ornaments {
+    animation: none;
+  }
+
   .emblem-3d__medal,
   .emblem-3d__medal--live,
   .emblem-3d__medal--sway {

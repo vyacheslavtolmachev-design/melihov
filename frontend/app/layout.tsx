@@ -3,6 +3,7 @@ import { Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { SideOrnaments } from "@/components/layout/SideOrnaments";
 import { MotionProvider } from "@/components/providers/MotionProvider";
 import { GoldDefs } from "@/components/brand/GoldDefs";
 import { site } from "@/lib/site";
@@ -40,11 +41,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" className={`${playfair.variable} ${manrope.variable}`}>
-      <body className="min-h-screen">
+      <body className="flex min-h-svh flex-col">
         <GoldDefs />
+        <SideOrnaments />
         <MotionProvider>
           <Header />
-          <main>{children}</main>
+          <main className="flex flex-1 flex-col">{children}</main>
           <Footer />
         </MotionProvider>
       </body>

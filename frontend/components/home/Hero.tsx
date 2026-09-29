@@ -7,7 +7,6 @@ import { ArrowUpRight } from "lucide-react";
 import { WakeMaskReveal } from "./WakeMaskReveal";
 import { Emblem3D } from "@/components/brand/Emblem3D";
 import type { Article } from "@/lib/articles";
-import type { Variety, VarietyPhoto } from "@/lib/wp/varieties";
 
 const easeOutExpo: [number, number, number, number] = [0.16, 0.8, 0.24, 1];
 
@@ -29,30 +28,43 @@ const tickerItems = [
   "Подбор сада с агрономом",
 ];
 
-type HeroVarietyTile = Pick<Variety, "slug" | "title" | "culture" | "excerpt"> & { image: VarietyPhoto };
+export type HeroCultureTile = {
+  slug: string;
+  name: string;
+  image: string;
+  /** Сортов культуры в каталоге; 0 — счётчик неизвестен (WordPress недоступен). */
+  count: number;
+};
 
 type HeroProps = {
   featuredArticle: Article | null;
-  varietyTiles: HeroVarietyTile[];
+  cultureTiles: HeroCultureTile[];
 };
 
-export function Hero({ featuredArticle, varietyTiles }: HeroProps) {
+function varietiesLabel(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${count} сорт`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} сорта`;
+  return `${count} сортов`;
+}
+
+export function Hero({ featuredArticle, cultureTiles }: HeroProps) {
   return (
-    <section className="relative flex min-h-svh items-center overflow-hidden pb-16 pt-[112px] md:pt-[120px]">
+    <section className="relative flex flex-1 items-center overflow-hidden pb-10 pt-[112px] md:pt-[120px] [@media(max-height:760px)]:pb-6">
       <div className="absolute inset-0 bg-[linear-gradient(160deg,#375440_0%,#273d2c_55%,#1e3022_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(38,58,40,.25)_0%,transparent_60%)]" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-bg to-transparent" />
 
-      <div className="pointer-events-none absolute inset-0 z-[1]">
-        <div className="shell h-full">
-          <div className="relative h-full w-full">
-            <WakeMaskReveal />
-          </div>
+      {/* Сад во всю ширину экрана; к краям и к низу растворяется в фоне страницы */}
+      <div className="pointer-events-none absolute inset-0 z-[1] [mask-image:linear-gradient(90deg,transparent,#000_16%,#000_84%,transparent)]">
+        <div className="absolute inset-0 [mask-image:linear-gradient(to_bottom,#000_70%,transparent)]">
+          <WakeMaskReveal />
         </div>
       </div>
 
       <motion.div variants={container} initial="hidden" animate="show" className="shell relative z-10 w-full">
-        <div className="grid min-h-[300px] items-stretch gap-2 md:min-h-[340px] lg:min-h-[360px] lg:grid-cols-[1.62fr_1fr]">
+        <div className="grid min-h-[300px] items-stretch gap-2 md:min-h-[340px] lg:min-h-[360px] lg:grid-cols-[1.62fr_1fr] lg:[@media(max-height:820px)]:min-h-[300px]">
           <motion.div
             variants={item}
             className="glass-hero relative flex h-full min-h-[300px] flex-col overflow-hidden px-4 py-[18px] md:min-h-[340px] md:px-[22px] md:py-[25px] lg:min-h-0 lg:px-6 lg:py-[28px]"
@@ -146,17 +158,17 @@ export function Hero({ featuredArticle, varietyTiles }: HeroProps) {
         </div>
 
         <motion.div variants={item} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {varietyTiles.length > 0
-            ? varietyTiles.map((tile) => (
+          {cultureTiles.length > 0
+            ? cultureTiles.map((tile) => (
                 <Link
                   key={tile.slug}
-                  href={`/catalog/${tile.slug}`}
-                  className="glass lift group relative flex min-h-[168px] flex-col overflow-hidden"
+                  href={`/catalog?culture=${tile.slug}`}
+                  className="glass lift group relative flex min-h-[168px] flex-col lg:[@media(max-height:820px)]:min-h-[136px] overflow-hidden"
                 >
                   <div className="absolute inset-0">
                     <Image
-                      src={tile.image.url}
-                      alt={tile.image.alt}
+                      src={tile.image}
+                      alt={`${tile.name} — общий кадр культуры`}
                       fill
                       sizes="(max-width: 768px) 50vw, 25vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -166,13 +178,11 @@ export function Hero({ featuredArticle, varietyTiles }: HeroProps) {
 
                   <div className="relative z-10 mt-auto flex items-end justify-between gap-3 p-5">
                     <span>
-                      {tile.culture && (
-                        <span className="block text-[11px] uppercase tracking-[0.14em] text-fg-muted">
-                          {tile.culture.name}
-                        </span>
-                      )}
+                      <span className="block text-[11px] uppercase tracking-[0.14em] text-fg-muted">
+                        {tile.count > 0 ? varietiesLabel(tile.count) : "Каталог"}
+                      </span>
                       <span className="mt-1.5 block font-display text-[18px] text-fg md:text-[19px]">
-                        {tile.title}
+                        {tile.name}
                       </span>
                     </span>
                     <ArrowUpRight
@@ -187,10 +197,10 @@ export function Hero({ featuredArticle, varietyTiles }: HeroProps) {
                 <Link
                   key={index}
                   href="/catalog"
-                  className="glass lift flex min-h-[168px] flex-col justify-end p-5"
+                  className="glass lift flex min-h-[168px] flex-col lg:[@media(max-height:820px)]:min-h-[136px] justify-end p-5"
                 >
                   <span className="font-display text-[18px] text-fg">Каталог саженцев</span>
-                  <span className="mt-1.5 text-[13px] text-fg-muted">Скоро появятся сорта</span>
+                  <span className="mt-1.5 text-[13px] text-fg-muted">Все культуры и сорта</span>
                 </Link>
               ))}
         </motion.div>

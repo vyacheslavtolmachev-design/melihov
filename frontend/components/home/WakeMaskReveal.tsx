@@ -122,6 +122,12 @@ export function WakeMaskReveal({
     const rctx = reveal.getContext("2d", { alpha: true });
     if (!rctx) return;
 
+    // Контурный слой рисуется с фильтром один раз на размер, а не каждый кадр:
+    // холст героя во всю ширину экрана, фильтр на нём дорогой
+    const ambient = document.createElement("canvas");
+    const actx = ambient.getContext("2d", { alpha: true });
+    if (!actx) return;
+
     const brush = makeBrush(BRUSH_R);
     const image = new Image();
     image.decoding = "async";
@@ -144,6 +150,18 @@ export function WakeMaskReveal({
       moved: false,
     };
 
+    const paintAmbient = () => {
+      actx.setTransform(1, 0, 0, 1, 0, 0);
+      actx.clearRect(0, 0, ambient.width, ambient.height);
+      if (!imageReady) return;
+      actx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      actx.globalAlpha = AMBIENT_OPACITY;
+      actx.filter = AMBIENT_FILTER;
+      drawCover(actx, image, width, height);
+      actx.filter = "none";
+      actx.globalAlpha = 1;
+    };
+
     const resize = () => {
       const rect = root.getBoundingClientRect();
       width = Math.max(1, Math.round(rect.width));
@@ -162,6 +180,10 @@ export function WakeMaskReveal({
 
       reveal.width = display.width;
       reveal.height = display.height;
+
+      ambient.width = display.width;
+      ambient.height = display.height;
+      paintAmbient();
 
       if (!pointer.moved) {
         pointer.x = width * 0.62;
@@ -202,11 +224,9 @@ export function WakeMaskReveal({
       if (!imageReady) return;
 
       // Тусклые контуры сада
-      dctx.save();
-      dctx.globalAlpha = AMBIENT_OPACITY;
-      dctx.filter = AMBIENT_FILTER;
-      drawCover(dctx, image, width, height);
-      dctx.restore();
+      dctx.setTransform(1, 0, 0, 1, 0, 0);
+      dctx.drawImage(ambient, 0, 0);
+      dctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 
       // Полный цвет только в мазке под курсором
       rctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -274,6 +294,7 @@ export function WakeMaskReveal({
 
     const onImage = () => {
       imageReady = true;
+      paintAmbient();
     };
 
     if (image.complete && image.naturalWidth > 0) {

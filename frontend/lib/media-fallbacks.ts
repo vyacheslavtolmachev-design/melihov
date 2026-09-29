@@ -1,6 +1,6 @@
 /** Локальные плейсхолдеры: ветка/куст культуры, не яркий макро-плод. */
 
-const cultureImages: Record<string, string> = {
+const ownCultureImages: Record<string, string> = {
   apple: "/media/catalog/apple.jpg",
   pear: "/media/catalog/pear.jpg",
   cherry: "/media/catalog/cherry.jpg",
@@ -11,12 +11,21 @@ const cultureImages: Record<string, string> = {
   currant: "/media/catalog/currant.jpg",
   gooseberry: "/media/catalog/gooseberry.jpg",
   raspberry: "/media/catalog/raspberry.jpg",
+};
+
+const cultureImages: Record<string, string> = {
+  ...ownCultureImages,
   // Своих кадров у этих культур ещё нет — временно берём ближайшую родственную.
   // Требования к съёмке — в docs/GRAPHICS.md.
   "columnar-apple": "/media/catalog/apple.jpg",
   "felt-cherry": "/media/catalog/cherry.jpg",
   josta: "/media/catalog/currant.jpg",
 };
+
+/** Собственный кадр культуры или null, если сейчас подставлен чужой (см. выше). */
+export function cultureOwnImage(cultureSlug: string): string | null {
+  return ownCultureImages[cultureSlug] ?? null;
+}
 
 /**
  * Кадр культуры — один и тот же для всех сортов этой культуры.

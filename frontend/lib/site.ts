@@ -59,10 +59,3 @@ export const headerCta = {
   label: "Подбор сада",
   href: "/services",
 } as const;
-
-/**
- * Разделы для подвала: та же навигация плюс «Подбор сада».
- * В шапке он живёт золотой кнопкой, но в подвале ссылка на него тоже нужна —
- * иначе на мобильном раздел доступен только через шторку меню.
- */
-export const footerNavigation: NavItem[] = [...navigation, { label: headerCta.label, href: headerCta.href }];
