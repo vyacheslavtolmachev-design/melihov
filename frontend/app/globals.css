@@ -48,6 +48,15 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Подсветы фона страницы. Вынесены в переменные, потому что их повторяет
+     вуаль под шапкой (.scroll-veil): контент должен таять ровно в этот фон */
+  :root {
+    --glow-top: radial-gradient(1100px 680px at 50% -18%, rgba(78, 98, 62, 0.4), transparent 72%);
+    --glow-sides:
+      radial-gradient(ellipse 42% 78% at 0% 42%, rgba(110, 132, 88, 0.38), transparent 70%),
+      radial-gradient(ellipse 40% 76% at 100% 58%, rgba(184, 154, 108, 0.26), transparent 72%);
+  }
+
   body {
     font-family: var(--font-body);
     font-size: 16px;
@@ -55,11 +64,7 @@
     color: var(--color-fg-soft);
     background-color: var(--color-bg);
     /* Верхний подсвет на самом фоне; бока — отдельным слоем (::after), иначе их закрывает full-bleed герой */
-    background-image: radial-gradient(
-      1100px 680px at 50% -18%,
-      rgba(78, 98, 62, 0.4),
-      transparent 72%
-    );
+    background-image: var(--glow-top);
     background-attachment: fixed;
   }
 
@@ -70,9 +75,7 @@
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    background:
-      radial-gradient(ellipse 42% 78% at 0% 42%, rgba(110, 132, 88, 0.38), transparent 70%),
-      radial-gradient(ellipse 40% 76% at 100% 58%, rgba(184, 154, 108, 0.26), transparent 72%);
+    background: var(--glow-sides);
   }
 
   body::before {
@@ -416,6 +419,112 @@
       0 26px 52px -26px rgba(0, 0, 0, 0.8);
   }
 
+  /* Вуали у краёв окна (ScrollVeils): контент, уходящий под плавающую шапку
+     и за нижний край, размывается и тает в фон страницы. Верхняя включается
+     с началом прокрутки — наверху страницы под шапкой лежит собственный фон
+     раздела; нижняя гаснет у конца страницы, чтобы подвал оставался чётким.
+     Размытие прогрессивное — чем ближе к краю, тем больше слоёв складывается.
+     Прозрачность анимируется у самих слоёв: opacity < 1 на родителе сделала бы
+     его backdrop root, и размытие детей перестало бы видеть страницу. */
+  .scroll-veil {
+    /* Направление от края окна внутрь страницы */
+    --veil-dir: to bottom;
+    position: fixed;
+    inset-inline: 0;
+    z-index: 40;
+    pointer-events: none;
+  }
+
+  .scroll-veil--top {
+    --veil-header-top: 16px;
+    --veil-header-bottom: 88px;
+    --veil-fade: 40px;
+    top: 0;
+    height: calc(var(--veil-header-bottom) + var(--veil-fade));
+  }
+
+  .scroll-veil--bottom {
+    --veil-dir: to top;
+    bottom: 0;
+    height: 64px;
+  }
+
+  /* Геометрия шапки: top-4 / h-[72px], с md — top-6 / h-[88px] */
+  @media (min-width: 48rem) {
+    .scroll-veil--top {
+      --veil-header-top: 24px;
+      --veil-header-bottom: 112px;
+      --veil-fade: 56px;
+    }
+
+    .scroll-veil--bottom {
+      height: 96px;
+    }
+  }
+
+  .scroll-veil > span {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.45s ease,
+      visibility 0.45s;
+  }
+
+  .scroll-veil[data-active="true"] > span {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .scroll-veil__blur:nth-child(1) {
+    backdrop-filter: blur(2px);
+    mask-image: linear-gradient(var(--veil-dir), #000 75%, transparent);
+  }
+
+  .scroll-veil__blur:nth-child(2) {
+    backdrop-filter: blur(4px);
+    mask-image: linear-gradient(var(--veil-dir), #000 60%, transparent 85%);
+  }
+
+  .scroll-veil__blur:nth-child(3) {
+    backdrop-filter: blur(8px);
+    mask-image: linear-gradient(var(--veil-dir), #000 40%, transparent 70%);
+  }
+
+  .scroll-veil__blur:nth-child(4) {
+    backdrop-filter: blur(16px);
+    mask-image: linear-gradient(var(--veil-dir), #000 20%, transparent 55%);
+  }
+
+  /* Тот же фон, что у body и body::after: контент не темнеет пятном, а растворяется
+     в странице. Подсветы рассчитаны на окно целиком, вуаль — его полоса у края,
+     поэтому фон растянут на высоту окна и прижат к тому же краю
+     (attachment: fixed iOS не поддерживает) */
+  .scroll-veil__melt {
+    background-color: var(--color-bg);
+    background-image: var(--glow-sides), var(--glow-top);
+    background-size: 100% 100vh;
+    background-repeat: no-repeat;
+  }
+
+  /* Над шапкой — растворение полное, у её нижнего края — на 70%, ниже сходит на нет */
+  .scroll-veil--top .scroll-veil__melt {
+    background-position: top;
+    mask-image: linear-gradient(
+      to bottom,
+      #000 var(--veil-header-top),
+      rgba(0, 0, 0, 0.7) var(--veil-header-bottom),
+      transparent 100%
+    );
+  }
+
+  /* У самого края — полностью, к верху полосы сходит на нет */
+  .scroll-veil--bottom .scroll-veil__melt {
+    background-position: bottom;
+    mask-image: linear-gradient(to top, #000, rgba(0, 0, 0, 0.6) 30%, transparent);
+  }
+
   /* Пометка «фото ещё не загружено»: редактор видит её прямо в каталоге */
   .photo-pending {
     position: absolute;
@@ -629,6 +738,16 @@
     backdrop-filter: blur(10px);
   }
 
+  /* Вуаль: два слоя размытия вместо четырёх. Верхний подсвет у body здесь
+     прокручивается вместе со страницей, поэтому в фоне вуали его нет */
+  .scroll-veil__blur:nth-child(odd) {
+    display: none;
+  }
+
+  .scroll-veil__melt {
+    background-image: var(--glow-sides);
+  }
+
   .lift:hover {
     transform: none;
   }
@@ -641,7 +760,8 @@
 
   .btn,
   .lift,
-  .nav-glass {
+  .nav-glass,
+  .scroll-veil > span {
     transition: none;
   }
 

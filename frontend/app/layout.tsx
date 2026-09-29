@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SideOrnaments } from "@/components/layout/SideOrnaments";
+import { ScrollVeils } from "@/components/layout/ScrollVeils";
 import { MotionProvider } from "@/components/providers/MotionProvider";
 import { GoldDefs } from "@/components/brand/GoldDefs";
 import { site } from "@/lib/site";
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-svh flex-col">
         <GoldDefs />
         <SideOrnaments />
+        <ScrollVeils />
         <MotionProvider>
           <Header />
           <main className="flex flex-1 flex-col">{children}</main>
