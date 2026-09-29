@@ -10,3 +10,4 @@ Thumbs.db
 !.env.production.example
 melihov-transfer-*.tar*
 *.orig
+inbox/

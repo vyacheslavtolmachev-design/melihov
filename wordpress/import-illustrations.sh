@@ -14,6 +14,13 @@ import_one() {
     return 1
   fi
 
+  # Фотография сорта (import-photos.sh) главнее иллюстрации — не перекрываем её.
+  thumb_id=$(wp --allow-root post meta get "$post_id" _thumbnail_id 2>/dev/null || true)
+  if [ -n "$thumb_id" ] && [ -n "$(wp --allow-root post meta get "$thumb_id" _heritage_photo 2>/dev/null || true)" ]; then
+    echo "${slug}: у сорта есть фотография, иллюстрация не ставится"
+    return 0
+  fi
+
   attachment_id=$(wp --allow-root media import "$file" \
     --post_id="$post_id" \
     --title="$alt" \

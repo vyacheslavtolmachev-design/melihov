@@ -84,6 +84,8 @@ services:
       - ./wordpress/bootstrap.sh:/bootstrap.sh:ro
       - ./wordpress/import-catalog.sh:/import-catalog.sh:ro
       - ./wordpress/import-catalog.php:/import-catalog.php:ro
+      - ./wordpress/import-photos.sh:/import-photos.sh:ro
+      - ./wordpress/import-photos.php:/import-photos.php:ro
       - ./wordpress/catalog:/catalog:ro
     entrypoint: ["sh", "/bootstrap.sh"]
 
