@@ -26,7 +26,7 @@ export function VarietyCard({ variety, wholesale }: VarietyCardProps) {
         />
 
         {variety.availability !== "in_stock" && (
-          <span className="absolute right-4 top-4 z-10 rounded-full border border-gold/30 bg-bg-deep/80 px-3 py-1.5 text-[11px] tracking-wide text-fg-soft backdrop-blur-sm">
+          <span className="absolute right-4 top-4 z-10 rounded-full border border-gold/30 bg-bg-deep/80 px-3 py-1.5 text-[11px] tracking-wide text-fg-soft md:backdrop-blur-sm">
             {availabilityLabels[variety.availability]}
           </span>
         )}

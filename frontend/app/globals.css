@@ -731,21 +731,37 @@
     background-attachment: scroll;
   }
 
-  /* Perf-lite: тяжёлое стекло и подъёмы на мобильных отключены */
+  /* Perf-lite: на телефоне каждый backdrop-filter — отдельный проход по кадру при прокрутке.
+     За стеклом здесь почти везде ровный фон страницы, размывать там нечего */
   .glass,
   .glass-strong,
-  .nav-glass {
-    backdrop-filter: blur(10px);
+  .glass-hero,
+  .nav-glass,
+  .photo-pending {
+    backdrop-filter: none;
   }
 
-  /* Вуаль: два слоя размытия вместо четырёх. Верхний подсвет у body здесь
-     прокручивается вместе со страницей, поэтому в фоне вуали его нет */
-  .scroll-veil__blur:nth-child(odd) {
+  /* Зерно с mix-blend-mode поверх всего окна заставляет перемешивать каждый кадр прокрутки,
+     а на экране телефона его и так не видно */
+  body::before {
     display: none;
   }
 
-  .scroll-veil__melt {
+  /* Вместо вуалей — сплошная полоса фона до низа шапки: контент уходит под неё и
+     обрезается ровно по шапке, без размытия. Нижней вуали нет */
+  .scroll-veil--bottom,
+  .scroll-veil__blur {
+    display: none;
+  }
+
+  .scroll-veil--top {
+    height: var(--veil-header-bottom);
+  }
+
+  /* Верхний подсвет у body здесь прокручивается вместе со страницей, поэтому в фоне полосы его нет */
+  .scroll-veil--top .scroll-veil__melt {
     background-image: var(--glow-sides);
+    mask-image: none;
   }
 
   .lift:hover {
