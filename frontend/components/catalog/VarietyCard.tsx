@@ -21,7 +21,9 @@ export function VarietyCard({ variety, wholesale }: VarietyCardProps) {
           src={photo.url}
           alt={photo.alt}
           fill
-          sizes="(max-width: 768px) 100vw, 33vw"
+          // По сетке каталога: три колонки рядом с фильтрами в .shell (≈268px), две с фильтрами,
+          // две без них, одна. С «33vw» браузер брал кадр 640–1080px на карточку в 268px
+          sizes="(min-width: 1280px) 268px, (min-width: 1024px) calc(50vw - 190px), (min-width: 640px) 50vw, 100vw"
           className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
         />
 

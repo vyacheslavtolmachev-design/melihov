@@ -769,6 +769,19 @@
   }
 }
 
+/* Облегчённый режим десктопа: PerfGuard ставит data-perf="lite" на <html>, если прокрутка
+   проседает ниже 45 fps. Выключается то же, что на телефоне, — стекло, зерно и размытие вуалей;
+   вуали остаются растворением в фон. Замер 2026-10-02 (каталог, 1366×768, без GPU):
+   сборка кадра 27–47 → 8–9 мс, больше всего весит размытие вуалей */
+:root[data-perf="lite"] :is(.glass, .glass-strong, .glass-hero, .nav-glass, .photo-pending) {
+  backdrop-filter: none;
+}
+
+:root[data-perf="lite"] body::before,
+:root[data-perf="lite"] .scroll-veil__blur {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
