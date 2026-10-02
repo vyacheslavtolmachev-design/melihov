@@ -120,19 +120,6 @@
     padding-inline: 30px;
   }
 
-  /* Ритм: 108px вокруг секций главной, 108px перед подвалом, 64px между секциями внутри страницы */
-  .sec {
-    padding-block: 108px;
-  }
-
-  .sec-end {
-    padding-block-end: 108px;
-  }
-
-  .sec-next {
-    padding-block-end: 64px;
-  }
-
   /* Гравюры на полях (SideOrnaments). Появляются, когда поле шире ~120px;
      высота гравюры привязана к ширине поля, чтобы ветвь не заходила под контент */
   .side-ornaments {
@@ -525,24 +512,6 @@
     mask-image: linear-gradient(to top, #000, rgba(0, 0, 0, 0.6) 30%, transparent);
   }
 
-  /* Пометка «фото ещё не загружено»: редактор видит её прямо в каталоге */
-  .photo-pending {
-    position: absolute;
-    z-index: 10;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: var(--radius-pill);
-    border: 1px solid rgba(232, 215, 180, 0.34);
-    background: rgba(18, 31, 20, 0.82);
-    padding: 5px 11px;
-    font-size: var(--text-meta);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-fg-soft);
-    backdrop-filter: blur(6px);
-  }
-
   .prose-panel :is(h2, h3) {
     margin-top: 2.2em;
     margin-bottom: 0.7em;
@@ -708,20 +677,6 @@
   }
 }
 
-@media (max-width: 860px) {
-  .sec {
-    padding-block: 72px;
-  }
-
-  .sec-end {
-    padding-block-end: 72px;
-  }
-
-  .sec-next {
-    padding-block-end: 48px;
-  }
-}
-
 @media (max-width: 768px) {
   .shell {
     padding-inline: 14px;
@@ -736,8 +691,7 @@
   .glass,
   .glass-strong,
   .glass-hero,
-  .nav-glass,
-  .photo-pending {
+  .nav-glass {
     backdrop-filter: none;
   }
 
@@ -773,7 +727,7 @@
    проседает ниже 45 fps. Выключается то же, что на телефоне, — стекло, зерно и размытие вуалей;
    вуали остаются растворением в фон. Замер 2026-10-02 (каталог, 1366×768, без GPU):
    сборка кадра 27–47 → 8–9 мс, больше всего весит размытие вуалей */
-:root[data-perf="lite"] :is(.glass, .glass-strong, .glass-hero, .nav-glass, .photo-pending) {
+:root[data-perf="lite"] :is(.glass, .glass-strong, .glass-hero, .nav-glass) {
   backdrop-filter: none;
 }
 

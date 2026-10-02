@@ -49,7 +49,6 @@ services:
     volumes:
       - wp_data:/var/www/html
       - ./wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
-      - ./wordpress/wp-content/acf-json:/var/www/html/wp-content/acf-json
       - ./wordpress/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     networks:
       default: {}
@@ -83,7 +82,6 @@ services:
     volumes:
       - wp_data:/var/www/html
       - ./wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
-      - ./wordpress/wp-content/acf-json:/var/www/html/wp-content/acf-json
       - ./wordpress/bootstrap.sh:/bootstrap.sh:ro
       - ./wordpress/import-catalog.sh:/import-catalog.sh:ro
       - ./wordpress/import-catalog.php:/import-catalog.php:ro

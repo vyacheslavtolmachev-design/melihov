@@ -80,7 +80,6 @@ wordpress/
   catalog/varieties.tsv             # сорта питомника — источник правды
   uploads.ini                       # лимиты загрузки медиа
   wp-content/mu-plugins/            # типы записей, поля сорта, редирект, сброс кеша
-  wp-content/acf-json/              # поля ACF под контролем версий
 frontend/
   app/                              # маршруты App Router
   components/                       # brand, layout, home, catalog, ui
