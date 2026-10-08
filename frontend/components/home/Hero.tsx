@@ -86,6 +86,7 @@ export function Hero({ featuredArticle, cultureTiles }: HeroProps) {
               <div className="flex justify-center lg:justify-end">
                 <Emblem3D
                   className="h-[140px] w-[140px] md:h-[170px] md:w-[170px] lg:h-[190px] lg:w-[190px]"
+                  sizes="(min-width: 1024px) 190px, (min-width: 768px) 170px, 140px"
                   interactive={false}
                   sway
                 />
@@ -93,11 +94,8 @@ export function Hero({ featuredArticle, cultureTiles }: HeroProps) {
             </div>
 
             <div className="relative mt-auto overflow-hidden border-t border-white/8 pt-3 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
-              <motion.div
-                className="flex w-max gap-5 whitespace-nowrap"
-                animate={{ x: ["0%", "-50%"] }}
-                transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-              >
+              {/* CSS-анимация, а не Motion: та считала сдвиг на JS в каждом кадре, бесконечно */}
+              <div className="hero-ticker flex w-max gap-5 whitespace-nowrap">
                 {[...tickerItems, ...tickerItems].map((text, index) => (
                   <span
                     key={`${text}-${index}`}
@@ -107,7 +105,7 @@ export function Hero({ featuredArticle, cultureTiles }: HeroProps) {
                     {text}
                   </span>
                 ))}
-              </motion.div>
+              </div>
             </div>
           </motion.div>
 
@@ -115,7 +113,7 @@ export function Hero({ featuredArticle, cultureTiles }: HeroProps) {
             {featuredArticle ? (
               <Link
                 href={`/articles/${featuredArticle.slug}`}
-                className="glass lift group relative flex h-full flex-col overflow-hidden"
+                className="glass glass-photo lift group relative flex h-full flex-col overflow-hidden"
               >
                 <div className="absolute inset-0">
                   {featuredArticle.image ? (
@@ -123,7 +121,7 @@ export function Hero({ featuredArticle, cultureTiles }: HeroProps) {
                       src={featuredArticle.image}
                       alt={featuredArticle.title}
                       fill
-                      sizes="(max-width: 1024px) 100vw, 360px"
+                      sizes="(min-width: 1200px) 432px, (min-width: 1024px) 38vw, 100vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                   ) : (
@@ -163,14 +161,16 @@ export function Hero({ featuredArticle, cultureTiles }: HeroProps) {
                 <Link
                   key={tile.slug}
                   href={`/catalog?culture=${tile.slug}`}
-                  className="glass lift group relative flex min-h-[168px] flex-col lg:[@media(max-height:820px)]:min-h-[136px] overflow-hidden"
+                  className="glass glass-photo lift group relative flex min-h-[168px] flex-col lg:[@media(max-height:820px)]:min-h-[136px] overflow-hidden"
                 >
                   <div className="absolute inset-0">
                     <Image
                       src={tile.image}
                       alt={`${tile.name} — общий кадр культуры`}
                       fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
+                      // Четыре колонки в .shell (≈273px), две на планшете, одна на телефоне.
+                      // С «25vw» на широком экране с DPR 2 тянулся кадр 1080px
+                      sizes="(min-width: 1200px) 273px, (min-width: 1024px) calc(25vw - 27px), (min-width: 640px) 50vw, 100vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-bg-deep/92 via-bg-deep/35 to-transparent" />

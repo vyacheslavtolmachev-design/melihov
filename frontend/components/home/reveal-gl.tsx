@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore, type Ref } from "react";
 import { useReducedMotion } from "motion/react";
+import { usePerfLite } from "@/components/layout/PerfGuard";
 
 /**
  * Обвязка оживления сада в герое (PollenReveal): когда эффект включать,
@@ -21,9 +22,13 @@ function subscribeMounted(onChange: () => void) {
   return () => {};
 }
 
-/** Эффект нужен только под мышью и без reduced motion; на таче и при SSR — статичный контурный кадр. */
+/**
+ * Эффект нужен только под мышью и без reduced motion; на таче, при SSR и в облегчённом режиме
+ * (PerfGuard) — статичный контурный кадр.
+ */
 export function useRevealEnabled() {
   const reduceMotion = useReducedMotion();
+  const lite = usePerfLite();
   const mounted = useSyncExternalStore(subscribeMounted, () => true, () => false);
   const finePointer = useSyncExternalStore(
     subscribeFinePointer,
@@ -31,7 +36,7 @@ export function useRevealEnabled() {
     () => false,
   );
 
-  return mounted && finePointer && !reduceMotion;
+  return mounted && finePointer && !reduceMotion && !lite;
 }
 
 export function StaticAmbient({ src, className, rootRef }: { src: string; className: string; rootRef?: Ref<HTMLDivElement> }) {

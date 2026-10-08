@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import { AddToRequestButton } from "@/components/request/AddToRequestButton";
+import { HoverPrefetchLink } from "@/components/ui/HoverPrefetchLink";
 import { availabilityLabels, formatPrice, varietyPhoto, type Variety } from "@/lib/wp/varieties";
 
 type VarietyCardProps = {
@@ -55,7 +55,8 @@ export function VarietyCard({ variety, wholesale }: VarietyCardProps) {
         </div>
       </div>
 
-      <Link
+      {/* Prefetch по наведению: сотня карточек в поле зрения — сотня фоновых запросов */}
+      <HoverPrefetchLink
         href={`/catalog/${variety.slug}`}
         aria-label={`${variety.title} — открыть карточку сорта`}
         className="absolute inset-0 z-20 rounded-[inherit]"

@@ -40,7 +40,7 @@ export default function NotFound() {
             </div>
           </div>
 
-          <Emblem3D className="hidden h-[150px] w-[150px] shrink-0 lg:block" interactive={false} />
+          <Emblem3D className="hidden h-[150px] w-[150px] shrink-0 lg:block" sizes="150px" interactive={false} />
         </div>
       </div>
     </section>

@@ -1,10 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useRef, useSyncExternalStore, type PointerEvent as ReactPointerEvent } from "react";
 import { useReducedMotion } from "motion/react";
 
 type Emblem3DProps = {
   className?: string;
+  /** Ширина медальона на экране — для выбора кадра. Исходник 768px весит 1,1 МБ, а в подвале нужен в 56px. */
+  sizes: string;
   /** Лёгкий наклон за курсором на desktop */
   interactive?: boolean;
   /** Автопокачивание влево-вправо и золотой перелив */
@@ -21,7 +24,7 @@ function subscribeFinePointer(onChange: () => void) {
  * Объёмная эмблема «МелиховЪ»: 3D-рендер медальона + перспектива.
  * Режим sway — заметное покачивание по yaw и металлический перелив (для героя).
  */
-export function Emblem3D({ className = "", interactive = true, sway = false }: Emblem3DProps) {
+export function Emblem3D({ className = "", sizes, interactive = true, sway = false }: Emblem3DProps) {
   const reduceMotion = useReducedMotion();
   const finePointer = useSyncExternalStore(
     subscribeFinePointer,
@@ -68,11 +71,12 @@ export function Emblem3D({ className = "", interactive = true, sway = false }: E
           transform: canSway ? undefined : live ? "rotateX(8deg) rotateY(-12deg) translateZ(8px)" : undefined,
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src="/brand/logo-melihov-3d.png"
           alt="Эмблема МелиховЪ"
-          className="relative z-[1] h-full w-full object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.55)]"
+          fill
+          sizes={sizes}
+          className="z-[1] object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.55)]"
           draggable={false}
         />
 

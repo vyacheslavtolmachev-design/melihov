@@ -23,6 +23,10 @@ import {
 const SPACING = 10;
 /** Пылинок в секунду, пока курсор стоит на месте, — тонкая струйка. */
 const IDLE_RATE = 10;
+/** Сколько секунд струйка сыплется после остановки курсора. Дальше пыльца догорает и цикл
+ *  кадров засыпает: иначе холст под стеклом героя перерисовывался бы 60 раз в секунду всё
+ *  время, пока мышь лежит над страницей, и вместе с ним всё размытие плиток над ним. */
+const IDLE_SECONDS = 1;
 /** Разброс пылинок вокруг следа, css-px. */
 const JITTER = 20;
 const MAX_PARTICLES = 900;
@@ -48,6 +52,9 @@ const DRAG_PER_SECOND = 0.25;
 /** При загрузке из света туннеля поднимается облачко пыльцы. */
 const INTRO_COUNT = 36;
 const INTRO_SECONDS = 0.7;
+/** Плотность холста. Картина мягкая и почти вся под плитками, а на экране с DPR 2 холст
+ *  в полной плотности — вчетверо больше пикселей на каждый кадр. */
+const MAX_RATIO = 1;
 
 /** Поля пылинки в плоском массиве. */
 const X = 0;
@@ -196,7 +203,18 @@ export function PollenReveal({ revealSrc = REVEAL_SRC, className = "" }: PollenR
     let introLeft = 0;
     let introCarry = 0;
 
-    const pointer = { x: 0, y: 0, lastX: 0, lastY: 0, inside: false, fresh: true, moved: false, carry: 0, idleCarry: 0 };
+    const pointer = {
+      x: 0,
+      y: 0,
+      lastX: 0,
+      lastY: 0,
+      inside: false,
+      fresh: true,
+      moved: false,
+      carry: 0,
+      idleCarry: 0,
+      idleLeft: 0,
+    };
 
     const spawn = (x: number, y: number, vx: number, vy: number) => {
       if (count >= MAX_PARTICLES) return;
@@ -231,7 +249,8 @@ export function PollenReveal({ revealSrc = REVEAL_SRC, className = "" }: PollenR
         pointer.lastX = pointer.x;
         pointer.lastY = pointer.y;
         pointer.moved = false;
-      } else if (pointer.inside) {
+      } else if (pointer.inside && pointer.idleLeft > 0) {
+        pointer.idleLeft -= dt;
         pointer.idleCarry += IDLE_RATE * dt;
         while (pointer.idleCarry >= 1) {
           pointer.idleCarry -= 1;
@@ -343,8 +362,8 @@ export function PollenReveal({ revealSrc = REVEAL_SRC, className = "" }: PollenR
       update(dt);
       render();
 
-      // Пыльцы нет и курсора нет — последний кадр уже чистый, ждём движения
-      if (count > 0 || pointer.inside || introLeft > 0) {
+      // Пыльца догорела, курсор замер или ушёл — последний кадр уже чистый, ждём движения
+      if (count > 0 || introLeft > 0 || (pointer.inside && pointer.idleLeft > 0)) {
         raf = requestAnimationFrame(tick);
       } else {
         last = 0;
@@ -359,7 +378,7 @@ export function PollenReveal({ revealSrc = REVEAL_SRC, className = "" }: PollenR
       const rect = root.getBoundingClientRect();
       width = Math.max(1, Math.round(rect.width));
       height = Math.max(1, Math.round(rect.height));
-      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const ratio = Math.min(window.devicePixelRatio || 1, MAX_RATIO);
       canvas.width = Math.round(width * ratio);
       canvas.height = Math.round(height * ratio);
 
@@ -392,6 +411,7 @@ export function PollenReveal({ revealSrc = REVEAL_SRC, className = "" }: PollenR
       pointer.x = x;
       pointer.y = y;
       pointer.moved = true;
+      pointer.idleLeft = IDLE_SECONDS;
       wake();
     };
 

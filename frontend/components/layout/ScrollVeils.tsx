@@ -43,9 +43,6 @@ function Veil({ edge, active }: { edge: "top" | "bottom"; active: boolean }) {
   return (
     <div aria-hidden className={`scroll-veil scroll-veil--${edge}`} data-active={active}>
       <span className="scroll-veil__blur" />
-      <span className="scroll-veil__blur" />
-      <span className="scroll-veil__blur" />
-      <span className="scroll-veil__blur" />
       <span className="scroll-veil__melt" />
     </div>
   );

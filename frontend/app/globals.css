@@ -78,15 +78,17 @@
     background: var(--glow-sides);
   }
 
+  /* Зерно. Обычное наложение, не mix-blend-mode: смешивание заставляло каждый кадр
+     сводить всё окно отдельным проходом. Прозрачность ниже прежней 0.028 — при обычном
+     наложении то же зерно заметнее */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 50;
-    opacity: 0.028;
+    opacity: 0.02;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    mix-blend-mode: soft-light;
   }
 
   h1,
@@ -271,6 +273,12 @@
     border-radius: var(--radius-panel);
   }
 
+  /* Стеклянная плитка, целиком закрытая своим кадром (плитки героя): размывать под ней
+     нечего, а размытие под пыльцой пересчитывалось бы каждый её кадр */
+  .glass-photo {
+    backdrop-filter: none;
+  }
+
   .media-frame {
     position: relative;
     overflow: hidden;
@@ -410,7 +418,9 @@
      и за нижний край, размывается и тает в фон страницы. Верхняя включается
      с началом прокрутки — наверху страницы под шапкой лежит собственный фон
      раздела; нижняя гаснет у конца страницы, чтобы подвал оставался чётким.
-     Размытие прогрессивное — чем ближе к краю, тем больше слоёв складывается.
+     Размытие — один слой, сходящий на нет маской. Было четыре (2/4/8/16px) для
+     прогрессивного размытия, но каждый слой — полноширинный проход по кадру при
+     прокрутке, и вместе они упирали композитор в потолок (замер 2026-10-05).
      Прозрачность анимируется у самих слоёв: opacity < 1 на родителе сделала бы
      его backdrop root, и размытие детей перестало бы видеть страницу. */
   .scroll-veil {
@@ -464,24 +474,9 @@
     visibility: visible;
   }
 
-  .scroll-veil__blur:nth-child(1) {
-    backdrop-filter: blur(2px);
-    mask-image: linear-gradient(var(--veil-dir), #000 75%, transparent);
-  }
-
-  .scroll-veil__blur:nth-child(2) {
-    backdrop-filter: blur(4px);
-    mask-image: linear-gradient(var(--veil-dir), #000 60%, transparent 85%);
-  }
-
-  .scroll-veil__blur:nth-child(3) {
+  .scroll-veil__blur {
     backdrop-filter: blur(8px);
-    mask-image: linear-gradient(var(--veil-dir), #000 40%, transparent 70%);
-  }
-
-  .scroll-veil__blur:nth-child(4) {
-    backdrop-filter: blur(16px);
-    mask-image: linear-gradient(var(--veil-dir), #000 20%, transparent 55%);
+    mask-image: linear-gradient(var(--veil-dir), #000 30%, transparent 75%);
   }
 
   /* Тот же фон, что у body и body::after: контент не темнеет пятном, а растворяется
@@ -584,10 +579,14 @@
   mask-image: radial-gradient(circle, #000 62%, transparent 78%);
 }
 
+/* Блик едет сдвигом, а не background-position: тот перерисовывался на главном потоке
+   каждый кадр, бесконечно. Слой шириной с прежнюю фоновую картинку (220% от рамки -20%),
+   градиент тот же */
 .emblem-3d__shimmer::before {
   content: "";
   position: absolute;
-  inset: -20%;
+  inset: -20% auto -20% 0;
+  width: 308%;
   background: linear-gradient(
     115deg,
     transparent 30%,
@@ -597,7 +596,6 @@
     rgba(156, 122, 78, 0.28) 58%,
     transparent 70%
   );
-  background-size: 220% 100%;
   mix-blend-mode: soft-light;
   animation: emblem-shimmer 4.2s ease-in-out infinite;
 }
@@ -621,15 +619,24 @@
 
 @keyframes emblem-shimmer {
   0% {
-    background-position: 120% 0;
-    transform: translateX(-6%);
+    transform: translateX(-74.7%);
   }
   50% {
-    background-position: 50% 0;
+    transform: translateX(-33.8%);
   }
   100% {
-    background-position: -20% 0;
-    transform: translateX(6%);
+    transform: translateX(7.1%);
+  }
+}
+
+/* Бегущая строка в плитке героя: две копии ленты, сдвиг на половину — бесшовный круг */
+.hero-ticker {
+  animation: hero-ticker 28s linear infinite;
+}
+
+@keyframes hero-ticker {
+  to {
+    transform: translateX(-50%);
   }
 }
 
@@ -672,7 +679,8 @@
   }
 
   .emblem-3d__shimmer::before,
-  .emblem-3d__shimmer::after {
+  .emblem-3d__shimmer::after,
+  .hero-ticker {
     animation: none !important;
   }
 }
@@ -695,8 +703,7 @@
     backdrop-filter: none;
   }
 
-  /* Зерно с mix-blend-mode поверх всего окна заставляет перемешивать каждый кадр прокрутки,
-     а на экране телефона его и так не видно */
+  /* Зерно — лишний слой на всё окно в каждом кадре прокрутки, а на экране телефона его и так не видно */
   body::before {
     display: none;
   }
@@ -724,8 +731,9 @@
 }
 
 /* Облегчённый режим десктопа: PerfGuard ставит data-perf="lite" на <html>, если прокрутка
-   проседает ниже 45 fps. Выключается то же, что на телефоне, — стекло, зерно и размытие вуалей;
-   вуали остаются растворением в фон. Замер 2026-10-02 (каталог, 1366×768, без GPU):
+   или движение мыши проседают ниже 45 fps. Выключается то же, что на телефоне, — стекло, зерно
+   и размытие вуалей (вуали остаются растворением в фон), плюс перелив медальона; пыльцу в герое
+   сменяет статичный кадр (reveal-gl.tsx). Замер 2026-10-02 (каталог, 1366×768, без GPU):
    сборка кадра 27–47 → 8–9 мс, больше всего весит размытие вуалей */
 :root[data-perf="lite"] :is(.glass, .glass-strong, .glass-hero, .nav-glass) {
   backdrop-filter: none;
@@ -734,6 +742,11 @@
 :root[data-perf="lite"] body::before,
 :root[data-perf="lite"] .scroll-veil__blur {
   display: none;
+}
+
+:root[data-perf="lite"] .emblem-3d__shimmer::before,
+:root[data-perf="lite"] .emblem-3d__shimmer::after {
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
